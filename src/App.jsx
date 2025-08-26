@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { getAllTransactions, addTransaction } from "./db/indexedDB";
 import TransactionsList from "@/components/TransactionsList";
 import { Home, List } from "lucide-react";
+import CategoryPicker from "./components/CategoryPicker";
 
 export default function App() {
+  const [category, setCategory] = useState("Food");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [quickAmount, setQuickAmount] = useState("");
@@ -34,14 +36,13 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === "dashboard") inputRef.current?.focus();
-    console.log(inputRef);
   }, [activeTab]);
 
   const handleQuickAdd = async () => {
     if (!quickAmount || isNaN(quickAmount)) return;
     await addTransaction({
       amount: Number(quickAmount),
-      category: "Uncategorized",
+      category,
       description: "",
       date: new Date().toISOString(),
     });
@@ -78,23 +79,26 @@ export default function App() {
                 Quick Add Expense
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-2">
-              <Input
-                ref={inputRef}
-                type="number"
-                inputMode="decimal"
-                placeholder="Amount"
-                value={quickAmount}
-                onChange={(e) => setQuickAmount(e.target.value)}
-                className="flex-1"
-                autoFocus
-              />
-              <Button
-                onClick={handleQuickAdd}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                Add
-              </Button>
+            <CardContent className="flex flex-col gap-2">
+              <CategoryPicker category={category} setCategory={setCategory} />
+              <div className="flex gap-2 w-full">
+                <Input
+                  ref={inputRef}
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="Amount"
+                  value={quickAmount}
+                  onChange={(e) => setQuickAmount(e.target.value)}
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button
+                  onClick={handleQuickAdd}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Add
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
