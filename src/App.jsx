@@ -8,6 +8,7 @@ import TransactionsList from "@/components/TransactionsList";
 import { Home, List } from "lucide-react";
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [quickAmount, setQuickAmount] = useState("");
   const inputRef = useRef(null);
@@ -49,7 +50,11 @@ export default function App() {
   };
 
   return (
-    <Tabs defaultValue="dashboard" className="flex flex-col h-screen">
+    <Tabs
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="flex flex-col h-screen"
+    >
       {/* Main content */}
       <div className="flex-1 p-4 max-w-md mx-auto w-full overflow-auto">
         <TabsContent value="dashboard">
