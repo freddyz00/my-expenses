@@ -31,6 +31,10 @@ export default function App() {
     refreshMonthlyTotal();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === "dashboard") inputRef.current?.focus();
+  }, [activeTab]);
+
   const handleQuickAdd = async () => {
     if (!quickAmount || isNaN(quickAmount)) return;
     await addTransaction({
