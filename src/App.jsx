@@ -34,6 +34,7 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === "dashboard") inputRef.current?.focus();
+    console.log(inputRef);
   }, [activeTab]);
 
   const handleQuickAdd = async () => {
@@ -104,12 +105,12 @@ export default function App() {
       </div>
 
       {/* Bottom tabs */}
-      <TabsList className="w-full h-12">
+      <TabsList className="w-full h-16">
         <TabsTrigger value="dashboard">
-          <Home />
+          <Home size={48} />
         </TabsTrigger>
         <TabsTrigger value="transactions">
-          <List />
+          <List size={48} />
         </TabsTrigger>
       </TabsList>
     </Tabs>
