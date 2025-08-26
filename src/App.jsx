@@ -79,26 +79,24 @@ export default function App() {
                 Quick Add Expense
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-4">
               <CategoryPicker category={category} setCategory={setCategory} />
-              <div className="flex gap-2 w-full">
-                <Input
-                  ref={inputRef}
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="Amount"
-                  value={quickAmount}
-                  onChange={(e) => setQuickAmount(e.target.value)}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button
-                  onClick={handleQuickAdd}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Add
-                </Button>
-              </div>
+              <Input
+                ref={inputRef}
+                type="number"
+                inputMode="decimal"
+                placeholder="Amount"
+                value={quickAmount}
+                onChange={(e) => setQuickAmount(e.target.value)}
+                className="flex-1"
+                autoFocus
+              />
+              <Button
+                onClick={handleQuickAdd}
+                className="bg-blue-500 hover:bg-blue-600 text-white self-center w-24"
+              >
+                Add
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

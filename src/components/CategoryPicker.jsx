@@ -9,7 +9,7 @@ const categories = [
 
 export default function CategoryPicker({ category, setCategory }) {
   return (
-    <div className="flex gap-2 overflow-x-auto py-2">
+    <div className="flex gap-2 overflow-x-auto">
       {categories.map((cat) => {
         const isSelected = category === cat.name;
         return (
