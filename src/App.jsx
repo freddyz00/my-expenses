@@ -7,16 +7,19 @@ import { getAllTransactions, addTransaction } from "./db/indexedDB";
 import TransactionsList from "@/components/TransactionsList";
 import { Home, List } from "lucide-react";
 import CategoryPicker from "./components/CategoryPicker";
+import WeeklyChart from "./components/WeeklyChart";
 
 export default function App() {
   const [category, setCategory] = useState("Food");
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [allTransactions, setAllTransactions] = useState([]);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [quickAmount, setQuickAmount] = useState("");
   const inputRef = useRef(null);
 
   const refreshMonthlyTotal = async () => {
     const txns = await getAllTransactions();
+    setAllTransactions(txns);
     const now = new Date();
     const monthTotal = txns
       .filter((t) => {
@@ -72,6 +75,8 @@ export default function App() {
               </p>
             </CardContent>
           </Card>
+
+          <WeeklyChart transactions={allTransactions} />
 
           <Card className="shadow-lg border border-gray-200">
             <CardHeader>
