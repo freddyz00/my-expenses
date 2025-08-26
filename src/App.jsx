@@ -107,10 +107,10 @@ export default function App() {
       {/* Bottom tabs */}
       <TabsList className="w-full h-16">
         <TabsTrigger value="dashboard">
-          <Home size={48} />
+          <Home />
         </TabsTrigger>
         <TabsTrigger value="transactions">
-          <List size={48} />
+          <List />
         </TabsTrigger>
       </TabsList>
     </Tabs>
