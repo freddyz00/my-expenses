@@ -72,6 +72,7 @@ export default function App() {
               <Input
                 ref={inputRef}
                 type="number"
+                inputMode="decimal"
                 placeholder="Amount"
                 value={quickAmount}
                 onChange={(e) => setQuickAmount(e.target.value)}
