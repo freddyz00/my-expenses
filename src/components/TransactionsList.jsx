@@ -1,13 +1,43 @@
 import React, { useEffect, useState } from "react";
+import { Trash } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { getAllTransactions } from "../db/indexedDB";
+import { Button } from "@/components/ui/button";
+import { getAllTransactions, deleteTransaction } from "../db/indexedDB";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function TransactionsList() {
   const [transactions, setTransactions] = useState([]);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
 
   useEffect(() => {
-    getAllTransactions().then(setTransactions);
+    getAllTransactions().then((transactions) => {
+      setTransactions(
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
+      );
+    });
   }, []);
+
+  const handleDelete = async (id) => {
+    if (transactionToDelete) {
+      await deleteTransaction(transactionToDelete);
+      setTransactionToDelete(null);
+      setTransactions(
+        transactions.filter(
+          (transaction) => transaction.id !== transactionToDelete
+        )
+      );
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -23,6 +53,13 @@ export default function TransactionsList() {
               <span className="text-sm text-gray-400">
                 {new Date(t.date).toLocaleDateString()}
               </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setTransactionToDelete(t.id)}
+              >
+                <Trash />
+              </Button>
             </CardHeader>
             {t.description && (
               <CardContent className="text-gray-600">
@@ -32,6 +69,28 @@ export default function TransactionsList() {
           </Card>
         ))
       )}
+      <AlertDialog open={!!transactionToDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently remove the
+              transaction from your records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTransactionToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

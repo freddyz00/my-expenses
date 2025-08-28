@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, CartesianGrid, YAxis } from "recharts";
 import {
   ChartTooltip,
   ChartTooltipContent,
