@@ -12,8 +12,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { CATEGORIES_TO_COLOR } from "./CategoryPicker";
 
 export default function TransactionsList() {
   const [transactions, setTransactions] = useState([]);
@@ -45,16 +45,24 @@ export default function TransactionsList() {
         <p className="text-gray-500 text-center">No transactions yet.</p>
       ) : (
         transactions.map((t, idx) => (
-          <Card key={idx} className="shadow-md border border-gray-200">
+          <Card key={idx} className="relative shadow-md border border-gray-200">
+            {/* Category indicator */}
+            <div
+              className={`absolute ${
+                CATEGORIES_TO_COLOR[t.category] || "bg-gray-200"
+              } w-2 h-full top-0  rounded-l-lg`}
+            ></div>
+
             <CardHeader className="flex justify-between items-center">
               <CardTitle className="text-lg font-medium">
                 ${Number(t.amount).toFixed(2)}
               </CardTitle>
               <span className="text-sm text-gray-400">
-                {new Date(t.date).toLocaleDateString()}
+                {new Date(t.date).toLocaleDateString("en-sg")}
               </span>
               <Button
-                variant="destructive"
+                className="text-red-600"
+                variant="ghost"
                 size="sm"
                 onClick={() => setTransactionToDelete(t.id)}
               >
