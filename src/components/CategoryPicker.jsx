@@ -45,10 +45,10 @@ const CategoryPicker = React.memo(function CategoryPicker({ category, setCategor
             key={cat}
             onClick={() => setCategory(cat)}
             variant="ghost"
-            className={`flex-1 h-16 flex flex-col items-center gap-2 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
+            className={`flex-1 h-16 flex flex-col items-center gap-2 rounded-2xl border-2 transition-all duration-200 ${
               isSelected 
                 ? `bg-gradient-to-r ${config.gradient} ${config.textSelected} border-transparent shadow-lg` 
-                : `${config.bgLight} ${config.text} ${config.border}`
+                : `${config.bgLight} ${config.text} ${config.border} active:bg-opacity-80`
             }`}
           >
             <Icon className="w-5 h-5" />

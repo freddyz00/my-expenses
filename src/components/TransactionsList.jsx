@@ -112,14 +112,14 @@ const SwipeableTransaction = React.memo(function SwipeableTransaction({ transact
           {/* Edit Button */}
           <Button
             onClick={handleEdit}
-            className="w-16 h-full bg-blue-500 active:bg-blue-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150 active:scale-95"
+            className="w-16 h-full bg-blue-500 active:bg-blue-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150"
           >
             <Edit3 className="w-5 h-5" />
           </Button>
           {/* Delete Button */}
           <Button
             onClick={handleDelete}
-            className="w-16 h-full bg-red-500 active:bg-red-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150 active:scale-95"
+            className="w-16 h-full bg-red-500 active:bg-red-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150"
           >
             <Trash2 className="w-5 h-5" />
           </Button>

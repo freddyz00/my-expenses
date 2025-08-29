@@ -205,10 +205,10 @@ export default function App() {
                           key={amount}
                           onClick={() => handlePresetSelect(amount)}
                           variant="ghost"
-                          className={`flex-1 h-10 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
+                          className={`flex-1 h-10 rounded-xl border-2 transition-all duration-200 ${
                             selectedPreset === amount
                               ? 'bg-blue-100 border-blue-500 text-blue-700 font-semibold'
-                              : 'border-gray-200'
+                              : 'border-gray-200 active:bg-gray-50'
                           }`}
                         >
                           ${amount}
@@ -239,7 +239,7 @@ export default function App() {
                       data-add-button
                       onClick={handleQuickAdd}
                       disabled={!quickAmount || isNaN(quickAmount) || isAdding}
-                      className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
+                      className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:brightness-90"
                     >
                       Add
                     </Button>
