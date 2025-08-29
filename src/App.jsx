@@ -275,7 +275,7 @@ export default function App() {
 
         {/* Bottom Navigation - Fixed */}
         <div className="flex-shrink-0 bg-white/90 backdrop-blur-lg border-t border-gray-200">
-          <TabsList className="w-full h-14 bg-transparent max-w-md mx-auto">
+          <TabsList className="w-full h-18 bg-transparent max-w-md mx-auto">
             <TabsTrigger 
               value="dashboard" 
               className="flex-1 flex flex-col items-center gap-1 h-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-600 rounded-xl transition-all duration-200"
