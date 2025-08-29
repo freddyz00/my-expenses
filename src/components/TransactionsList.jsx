@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Trash } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState, useRef } from "react";
+import { Trash2, Calendar, DollarSign } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAllTransactions, deleteTransaction } from "../db/indexedDB";
 import {
@@ -13,88 +13,385 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CATEGORIES_TO_COLOR } from "./CategoryPicker";
 
-export default function TransactionsList() {
-  const [transactions, setTransactions] = useState([]);
-  const [transactionToDelete, setTransactionToDelete] = useState(null);
+// Swipeable Transaction Component
+function SwipeableTransaction({ transaction, onDelete }) {
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const cardRef = useRef(null);
+  
+  const categoryConfig = CATEGORIES_TO_COLOR[transaction.category];
+  const Icon = categoryConfig?.icon;
 
-  useEffect(() => {
-    getAllTransactions().then((transactions) => {
-      setTransactions(
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date))
-      );
-    });
-  }, []);
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    setStartX(e.touches[0].clientX);
+  };
 
-  const handleDelete = async (id) => {
-    if (transactionToDelete) {
-      await deleteTransaction(transactionToDelete);
-      setTransactionToDelete(null);
-      setTransactions(
-        transactions.filter(
-          (transaction) => transaction.id !== transactionToDelete
-        )
-      );
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    
+    const currentX = e.touches[0].clientX;
+    const diffX = startX - currentX;
+    
+    // Only allow left swipe (positive diffX)
+    if (diffX > 0) {
+      setSwipeOffset(Math.min(diffX, 80)); // Max swipe distance of 80px
+    } else {
+      setSwipeOffset(0);
     }
   };
 
-  return (
-    <div className="space-y-3">
-      {transactions.length === 0 ? (
-        <p className="text-gray-500 text-center">No transactions yet.</p>
-      ) : (
-        transactions.map((t, idx) => (
-          <Card key={idx} className="relative shadow-md border border-gray-200">
-            {/* Category indicator */}
-            <div
-              className={`absolute ${
-                CATEGORIES_TO_COLOR[t.category] || "bg-gray-200"
-              } w-2 h-full top-0  rounded-l-lg`}
-            ></div>
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    
+    // If swiped more than 40px, keep it open, otherwise close
+    if (swipeOffset > 40) {
+      setSwipeOffset(80);
+    } else {
+      setSwipeOffset(0);
+    }
+  };
 
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-lg font-medium">
-                ${Number(t.amount).toFixed(2)}
-              </CardTitle>
-              <span className="text-sm text-gray-400">
-                {new Date(t.date).toLocaleDateString("en-sg")}
-              </span>
-              <Button
-                className="text-red-600"
-                variant="ghost"
-                size="sm"
-                onClick={() => setTransactionToDelete(t.id)}
-              >
-                <Trash />
-              </Button>
-            </CardHeader>
-            {t.description && (
-              <CardContent className="text-gray-600">
-                {t.description}
-              </CardContent>
-            )}
-          </Card>
-        ))
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.clientX);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    
+    const currentX = e.clientX;
+    const diffX = startX - currentX;
+    
+    if (diffX > 0) {
+      setSwipeOffset(Math.min(diffX, 80));
+    } else {
+      setSwipeOffset(0);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    
+    if (swipeOffset > 40) {
+      setSwipeOffset(80);
+    } else {
+      setSwipeOffset(0);
+    }
+  };
+
+  const handleDelete = () => {
+    onDelete(transaction.id);
+    setSwipeOffset(0);
+  };
+
+  return (
+    <div className="relative rounded-2xl shadow-sm">
+      {/* Delete Button (behind the card) - Only visible when swiped */}
+      {swipeOffset > 0 && (
+        <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center rounded-r-2xl">
+          <Button
+            onClick={handleDelete}
+            className="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full p-0 shadow-lg"
+          >
+            <Trash2 className="w-5 h-5" />
+          </Button>
+        </div>
       )}
+
+      {/* Main Card Content - Fully Opaque */}
+      <div
+        ref={cardRef}
+        className="bg-white transition-transform duration-200 ease-out cursor-grab active:cursor-grabbing rounded-2xl relative z-10 shadow-sm"
+        style={{
+          transform: `translateX(-${swipeOffset}px)`,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
+            {/* Category Icon */}
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${categoryConfig?.gradient || 'from-gray-400 to-gray-600'} flex items-center justify-center flex-shrink-0`}>
+              {Icon && <Icon className="w-5 h-5 text-white" />}
+            </div>
+
+            {/* Transaction Details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-lg font-bold text-gray-900">
+                    ${Number(transaction.amount).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {transaction.category}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {new Date(transaction.date).toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                  })}
+                </span>
+              </div>
+              {transaction.description && (
+                <p className="text-sm text-gray-600 mt-1 truncate">
+                  {transaction.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </div>
+    </div>
+  );
+}
+
+export default function TransactionsList() {
+  const [allTransactions, setAllTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
+  
+  // Set defaults to current month and year
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth().toString());
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear().toString());
+
+  useEffect(() => {
+    getAllTransactions().then((transactions) => {
+      const sorted = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setAllTransactions(sorted);
+      setFilteredTransactions(sorted);
+    });
+  }, []);
+
+  // Filter transactions when month or year selection changes
+  useEffect(() => {
+    if (selectedMonth === 'all' && selectedYear === 'all') {
+      setFilteredTransactions(allTransactions);
+    } else {
+      const filtered = allTransactions.filter(transaction => {
+        const date = new Date(transaction.date);
+        const matchesMonth = selectedMonth === 'all' || date.getMonth() === parseInt(selectedMonth);
+        const matchesYear = selectedYear === 'all' || date.getFullYear() === parseInt(selectedYear);
+        return matchesMonth && matchesYear;
+      });
+      setFilteredTransactions(filtered);
+    }
+  }, [selectedMonth, selectedYear, allTransactions]);
+
+  // Generate available months and years from transactions
+  const getAvailableMonths = () => {
+    const months = new Set();
+    allTransactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      months.add(date.getMonth());
+    });
+    
+    return Array.from(months)
+      .sort((a, b) => a - b)
+      .map(month => ({
+        value: month.toString(),
+        label: new Date(2024, month).toLocaleDateString('en-US', { month: 'long' })
+      }));
+  };
+
+  const getAvailableYears = () => {
+    const years = new Set();
+    allTransactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      years.add(date.getFullYear());
+    });
+    
+    return Array.from(years)
+      .sort((a, b) => b - a) // Sort newest first
+      .map(year => ({
+        value: year.toString(),
+        label: year.toString()
+      }));
+  };
+
+  const handleDelete = async (id) => {
+    setTransactionToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (transactionToDelete) {
+      await deleteTransaction(transactionToDelete);
+      const updatedTransactions = allTransactions.filter(
+        (transaction) => transaction.id !== transactionToDelete
+      );
+      setAllTransactions(updatedTransactions);
+      setTransactionToDelete(null);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  };
+
+  const groupTransactionsByDate = (transactions) => {
+    const groups = {};
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date).toDateString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(transaction);
+    });
+    return groups;
+  };
+
+  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+  const availableMonths = getAvailableMonths();
+  const availableYears = getAvailableYears();
+
+  const isFiltered = selectedMonth !== 'all' || selectedYear !== 'all';
+
+  return (
+    <div className="space-y-4">
+      {/* Month and Year Filters */}
+      {allTransactions.length > 0 && (
+        <div className="mb-6 flex gap-3">
+          {/* Month Select */}
+          <div className="flex-1">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl px-4 py-3 text-gray-900 font-medium focus:border-blue-500 shadow-sm">
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {availableMonths.map(month => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Year Select */}
+          <div className="flex-1">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 rounded-2xl px-4 py-3 text-gray-900 font-medium focus:border-blue-500 shadow-sm">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year.value} value={year.value}>
+                    {year.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {filteredTransactions.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-500 text-lg font-medium mb-2">
+            {!isFiltered ? 'No transactions yet' : 'No transactions found'}
+          </p>
+          <p className="text-gray-400 text-sm">
+            {!isFiltered 
+              ? 'Add your first expense to get started' 
+              : 'Try adjusting your filters or add new expenses'
+            }
+          </p>
+        </div>
+      ) : (
+        Object.entries(groupedTransactions)
+          .sort(([a], [b]) => new Date(b) - new Date(a))
+          .map(([dateString, dayTransactions]) => {
+            const dayTotal = dayTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+            
+            return (
+              <div key={dateString} className="space-y-3">
+                {/* Date Header */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      {formatDate(dateString)}
+                    </h3>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">
+                    ${dayTotal.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Transactions for this date */}
+                <div className="space-y-2">
+                  {dayTransactions.map((t) => (
+                    <SwipeableTransaction 
+                      key={t.id} 
+                      transaction={t} 
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+      )}
+
       <AlertDialog open={!!transactionToDelete}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-bold">Delete Transaction?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
               This action cannot be undone. This will permanently remove the
               transaction from your records.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTransactionToDelete(null)}>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel 
+              onClick={() => setTransactionToDelete(null)}
+              className="rounded-2xl"
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-2xl"
             >
-              Continue
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

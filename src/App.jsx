@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getAllTransactions, addTransaction } from "./db/indexedDB";
 import TransactionsList from "@/components/TransactionsList";
-import { Home, List } from "lucide-react";
+import { Home, List, Plus, TrendingUp, Calendar } from "lucide-react";
 import CategoryPicker from "./components/CategoryPicker";
 import WeeklyChart from "./components/WeeklyChart";
 
@@ -14,13 +14,19 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [allTransactions, setAllTransactions] = useState([]);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const [weeklyTotal, setWeeklyTotal] = useState(0);
+  const [todayTotal, setTodayTotal] = useState(0);
   const [quickAmount, setQuickAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
   const inputRef = useRef(null);
 
-  const refreshMonthlyTotal = async () => {
+  const refreshTotals = async () => {
     const txns = await getAllTransactions();
     setAllTransactions(txns);
     const now = new Date();
+    
+    // Monthly total
     const monthTotal = txns
       .filter((t) => {
         const date = new Date(t.date);
@@ -31,95 +37,184 @@ export default function App() {
       })
       .reduce((sum, t) => sum + Number(t.amount), 0);
     setMonthlyTotal(monthTotal);
+
+    // Weekly total (last 7 days)
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekTotal = txns
+      .filter((t) => new Date(t.date) >= weekAgo)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    setWeeklyTotal(weekTotal);
+
+    // Today total
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const todayTotalAmount = txns
+      .filter((t) => {
+        const date = new Date(t.date);
+        return date >= todayStart && date < todayEnd;
+      })
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+    setTodayTotal(todayTotalAmount);
   };
 
   useEffect(() => {
-    refreshMonthlyTotal();
+    refreshTotals();
   }, []);
 
-  useEffect(() => {
-    if (activeTab === "dashboard") inputRef.current?.focus();
-  }, [activeTab]);
-
   const handleQuickAdd = async () => {
-    if (!quickAmount || isNaN(quickAmount)) return;
-    await addTransaction({
-      amount: Number(quickAmount),
-      category,
-      description: "",
-      date: new Date().toISOString(),
-    });
-    setQuickAmount("");
-    refreshMonthlyTotal();
-    inputRef.current?.focus();
+    if (!quickAmount || isNaN(quickAmount) || isAdding) return;
+    
+    setIsAdding(true);
+    try {
+      await addTransaction({
+        amount: Number(quickAmount),
+        category,
+        description: description.trim(),
+        date: new Date().toISOString(),
+      });
+      setQuickAmount("");
+      setDescription("");
+      refreshTotals();
+      
+      // Show success feedback
+      setTimeout(() => setIsAdding(false), 500);
+    } catch (error) {
+      setIsAdding(false);
+      console.error("Error adding transaction:", error);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && quickAmount && !isNaN(quickAmount)) {
+      handleQuickAdd();
+    }
   };
 
   return (
-    <Tabs
-      value={activeTab}
-      onValueChange={setActiveTab}
-      className="flex flex-col h-screen"
-    >
-      {/* Main content */}
-      <div className="flex-1 p-4 max-w-md mx-auto w-full overflow-auto">
-        <TabsContent value="dashboard">
-          <Card className="mb-6 shadow-lg border border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-500">
-                Total Spent This Month
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-black">
-                ${monthlyTotal.toFixed(2)}
-              </p>
-            </CardContent>
-          </Card>
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col h-full"
+      >
+        {/* Header */}
+        <div className="flex-shrink-0 px-6 pt-6 pb-4">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {activeTab === 'dashboard' ? 'My Expenses' : 'Transactions'}
+            </h1>
+            <p className="text-sm text-gray-600">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+        </div>
 
-          <WeeklyChart transactions={allTransactions} />
+        {/* Main content - fills remaining space */}
+        <div className="flex-1 min-h-0">
+          <TabsContent value="dashboard" className="h-full flex flex-col m-0 p-0">
+            <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full min-h-0">
+              
+              {/* Stats Row - Top */}
+              <div className="flex-shrink-0 mb-4">
+                <div className="flex gap-3">
+                  <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-2xl p-3 text-center">
+                    <Calendar className="w-4 h-4 text-blue-600 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-gray-900">${todayTotal.toFixed(0)}</p>
+                    <p className="text-xs text-gray-600">Today</p>
+                  </div>
+                  
+                  <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-2xl p-3 text-center">
+                    <TrendingUp className="w-4 h-4 text-green-600 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-gray-900">${weeklyTotal.toFixed(0)}</p>
+                    <p className="text-xs text-gray-600">Week</p>
+                  </div>
+                  
+                  <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-2xl p-3 text-center">
+                    <div className="w-4 h-4 bg-purple-600 rounded mx-auto mb-1"></div>
+                    <p className="text-lg font-bold text-gray-900">${monthlyTotal.toFixed(0)}</p>
+                    <p className="text-xs text-gray-600">Month</p>
+                  </div>
+                </div>
+              </div>
 
-          <Card className="shadow-lg border border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-500">
-                Quick Add Expense
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <CategoryPicker category={category} setCategory={setCategory} />
-              <Input
-                ref={inputRef}
-                type="number"
-                inputMode="decimal"
-                placeholder="Amount"
-                value={quickAmount}
-                onChange={(e) => setQuickAmount(e.target.value)}
-                className="flex-1"
-                autoFocus
-              />
-              <Button
-                onClick={handleQuickAdd}
-                className="bg-blue-500 hover:bg-blue-600 text-white self-center w-24"
-              >
-                Add
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              {/* Quick Add - Center Position for Natural Thumb Access */}
+              <div className="flex-shrink-0 mb-4">
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-4 shadow-lg border border-white/20">
+                  <CategoryPicker category={category} setCategory={setCategory} />
+                  
+                  <div className="flex gap-3 mt-4">
+                    <Input
+                      ref={inputRef}
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="$0.00"
+                      value={quickAmount}
+                      onChange={(e) => setQuickAmount(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1 text-xl font-semibold h-12 text-center border-2 border-gray-200 focus:border-blue-500 rounded-2xl"
+                      autoFocus
+                    />
+                    <Button
+                      onClick={handleQuickAdd}
+                      disabled={!quickAmount || isNaN(quickAmount) || isAdding}
+                      className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    >
+                      {isAdding ? "..." : "Add"}
+                    </Button>
+                  </div>
 
-        <TabsContent value="transactions">
-          <TransactionsList />
-        </TabsContent>
-      </div>
+                  {description.length > 0 || quickAmount ? (
+                    <Input
+                      type="text"
+                      placeholder="Description (optional)"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="mt-3 border-gray-200 focus:border-blue-500 rounded-xl"
+                    />
+                  ) : null}
+                </div>
+              </div>
 
-      {/* Bottom tabs */}
-      <TabsList className="w-full h-16">
-        <TabsTrigger value="dashboard">
-          <Home />
-        </TabsTrigger>
-        <TabsTrigger value="transactions">
-          <List />
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
+              {/* Chart - Takes remaining space */}
+              <div className="flex-1 min-h-0">
+                <WeeklyChart transactions={allTransactions} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="transactions" className="h-full m-0 p-0">
+            <div className="h-full px-6 max-w-md mx-auto flex flex-col">
+              <div className="flex-1 min-h-0 overflow-auto">
+                <TransactionsList />
+              </div>
+            </div>
+          </TabsContent>
+        </div>
+
+        {/* Bottom Navigation - Fixed */}
+        <div className="flex-shrink-0 bg-white/90 backdrop-blur-lg border-t border-gray-200">
+          <TabsList className="w-full h-16 bg-transparent p-3 max-w-md mx-auto">
+            <TabsTrigger 
+              value="dashboard" 
+              className="flex-1 flex flex-col items-center gap-1 h-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-600 rounded-xl transition-all duration-200"
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-xs font-medium">Home</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="transactions"
+              className="flex-1 flex flex-col items-center gap-1 h-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-600 rounded-xl transition-all duration-200"
+            >
+              <List className="w-5 h-5" />
+              <span className="text-xs font-medium">Transactions</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+      </Tabs>
+    </div>
   );
 }
