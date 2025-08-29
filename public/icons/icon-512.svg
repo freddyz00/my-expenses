@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with modern gradient -->
+  <rect width="512" height="512" rx="120" fill="url(#gradient)"/>
+  
+  <!-- Main dollar sign -->
+  <g transform="translate(256, 256)">
+    <!-- Vertical line -->
+    <rect x="-8" y="-180" width="16" height="360" rx="8" fill="white"/>
+    
+    <!-- Top S curve -->
+    <path d="M-80 -120 Q-80 -160 -40 -160 L40 -160 Q80 -160 80 -120 Q80 -80 40 -80 L-40 -80 Q-80 -80 -80 -40 Q-80 0 -40 0 L40 0 Q80 0 80 40 Q80 80 40 80 L-40 80 Q-80 80 -80 120" 
+          stroke="white" 
+          stroke-width="32" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          fill="none"/>
+  </g>
+  
+  <!-- Subtle inner glow -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+  
+  <!-- Corner accent dots -->
+  <circle cx="128" cy="128" r="8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="384" cy="128" r="8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="128" cy="384" r="8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="384" cy="384" r="8" fill="rgba(255,255,255,0.3)"/>
+  
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#06B6D4"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -109,23 +109,19 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
       {swipeOffset > 0 && (
         <div className="absolute right-0 top-0 h-full w-32 flex rounded-r-2xl overflow-hidden">
           {/* Edit Button */}
-          <div className="w-16 bg-blue-500 flex items-center justify-center">
-            <Button
-              onClick={handleEdit}
-              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-0 shadow-lg"
-            >
-              <Edit3 className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button
+            onClick={handleEdit}
+            className="w-16 h-full bg-blue-500 hover:bg-blue-600 text-white rounded-none border-0 p-0 flex items-center justify-center"
+          >
+            <Edit3 className="w-5 h-5" />
+          </Button>
           {/* Delete Button */}
-          <div className="w-16 bg-red-500 flex items-center justify-center">
-            <Button
-              onClick={handleDelete}
-              className="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full p-0 shadow-lg"
-            >
-              <Trash2 className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button
+            onClick={handleDelete}
+            className="w-16 h-full bg-red-500 hover:bg-red-600 text-white rounded-none border-0 p-0 flex items-center justify-center"
+          >
+            <Trash2 className="w-5 h-5" />
+          </Button>
         </div>
       )}
 
