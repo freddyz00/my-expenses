@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Trash2, Calendar, DollarSign } from "lucide-react";
+import { Trash2, Calendar, DollarSign, Edit3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAllTransactions, deleteTransaction } from "../db/indexedDB";
+import { Input } from "@/components/ui/input";
+import { getAllTransactions, deleteTransaction, updateTransaction } from "../db/indexedDB";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 import {
   Select,
   SelectContent,
@@ -21,9 +23,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CATEGORIES_TO_COLOR } from "./CategoryPicker";
+import CategoryPicker from "./CategoryPicker";
 
 // Swipeable Transaction Component
-function SwipeableTransaction({ transaction, onDelete }) {
+function SwipeableTransaction({ transaction, onDelete, onEdit }) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -45,7 +48,7 @@ function SwipeableTransaction({ transaction, onDelete }) {
     
     // Only allow left swipe (positive diffX)
     if (diffX > 0) {
-      setSwipeOffset(Math.min(diffX, 80)); // Max swipe distance of 80px
+      setSwipeOffset(Math.min(diffX, 120)); // Max swipe distance of 120px for two buttons
     } else {
       setSwipeOffset(0);
     }
@@ -54,9 +57,9 @@ function SwipeableTransaction({ transaction, onDelete }) {
   const handleTouchEnd = () => {
     setIsDragging(false);
     
-    // If swiped more than 40px, keep it open, otherwise close
-    if (swipeOffset > 40) {
-      setSwipeOffset(80);
+    // If swiped more than 60px, keep it open, otherwise close
+    if (swipeOffset > 60) {
+      setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
     }
@@ -74,7 +77,7 @@ function SwipeableTransaction({ transaction, onDelete }) {
     const diffX = startX - currentX;
     
     if (diffX > 0) {
-      setSwipeOffset(Math.min(diffX, 80));
+      setSwipeOffset(Math.min(diffX, 120));
     } else {
       setSwipeOffset(0);
     }
@@ -83,8 +86,8 @@ function SwipeableTransaction({ transaction, onDelete }) {
   const handleMouseUp = () => {
     setIsDragging(false);
     
-    if (swipeOffset > 40) {
-      setSwipeOffset(80);
+    if (swipeOffset > 60) {
+      setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
     }
@@ -95,17 +98,34 @@ function SwipeableTransaction({ transaction, onDelete }) {
     setSwipeOffset(0);
   };
 
+  const handleEdit = () => {
+    onEdit(transaction);
+    setSwipeOffset(0);
+  };
+
   return (
     <div className="relative rounded-2xl shadow-sm">
-      {/* Delete Button (behind the card) - Only visible when swiped */}
+      {/* Action Buttons (behind the card) - Only visible when swiped */}
       {swipeOffset > 0 && (
-        <div className="absolute right-0 top-0 h-full w-20 bg-red-500 flex items-center justify-center rounded-r-2xl">
-          <Button
-            onClick={handleDelete}
-            className="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full p-0 shadow-lg"
-          >
-            <Trash2 className="w-5 h-5" />
-          </Button>
+        <div className="absolute right-0 top-0 h-full w-32 flex rounded-r-2xl overflow-hidden">
+          {/* Edit Button */}
+          <div className="w-16 bg-blue-500 flex items-center justify-center">
+            <Button
+              onClick={handleEdit}
+              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-0 shadow-lg"
+            >
+              <Edit3 className="w-5 h-5" />
+            </Button>
+          </div>
+          {/* Delete Button */}
+          <div className="w-16 bg-red-500 flex items-center justify-center">
+            <Button
+              onClick={handleDelete}
+              className="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full p-0 shadow-lg"
+            >
+              <Trash2 className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -167,6 +187,12 @@ export default function TransactionsList() {
   const [allTransactions, setAllTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [transactionToEdit, setTransactionToEdit] = useState(null);
+  const [editForm, setEditForm] = useState({
+    amount: '',
+    category: '',
+    description: ''
+  });
   
   // Set defaults to current month and year
   const currentDate = new Date();
@@ -229,6 +255,41 @@ export default function TransactionsList() {
 
   const handleDelete = async (id) => {
     setTransactionToDelete(id);
+  };
+
+  const handleEdit = (transaction) => {
+    setTransactionToEdit(transaction);
+    setEditForm({
+      amount: transaction.amount.toString(),
+      category: transaction.category,
+      description: transaction.description || ''
+    });
+  };
+
+  const handleEditSave = async () => {
+    if (!transactionToEdit || !editForm.amount || isNaN(editForm.amount)) return;
+    
+    try {
+      const updatedTransaction = await updateTransaction(transactionToEdit.id, {
+        amount: Number(editForm.amount),
+        category: editForm.category,
+        description: editForm.description.trim()
+      });
+      
+      const updatedTransactions = allTransactions.map(t => 
+        t.id === transactionToEdit.id ? updatedTransaction : t
+      );
+      setAllTransactions(updatedTransactions);
+      setTransactionToEdit(null);
+      setEditForm({ amount: '', category: '', description: '' });
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setTransactionToEdit(null);
+    setEditForm({ amount: '', category: '', description: '' });
   };
 
   const confirmDelete = async () => {
@@ -363,6 +424,7 @@ export default function TransactionsList() {
                       key={t.id} 
                       transaction={t} 
                       onDelete={handleDelete}
+                      onEdit={handleEdit}
                     />
                   ))}
                 </div>
@@ -371,6 +433,7 @@ export default function TransactionsList() {
           })
       )}
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!transactionToDelete}>
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
@@ -392,6 +455,78 @@ export default function TransactionsList() {
               className="bg-red-500 hover:bg-red-600 text-white rounded-2xl"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Transaction Dialog */}
+      <AlertDialog open={!!transactionToEdit}>
+        <AlertDialogContent className="rounded-3xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold">Edit Transaction</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
+              Update the transaction details below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Category Picker */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+              <CategoryPicker 
+                category={editForm.category} 
+                setCategory={(cat) => setEditForm(prev => ({ ...prev, category: cat }))}
+              />
+            </div>
+
+            {/* Amount Input */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg font-semibold text-gray-400">
+                  $
+                </span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={editForm.amount}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    setEditForm(prev => ({ ...prev, amount: value }));
+                  }}
+                  className="pl-8 text-lg font-semibold border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+                />
+              </div>
+            </div>
+
+            {/* Description Input */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Description</label>
+              <Input
+                type="text"
+                placeholder="Optional description"
+                value={editForm.description}
+                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                className="border-2 border-gray-200 focus:border-blue-500 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel 
+              onClick={handleEditCancel}
+              className="rounded-2xl"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEditSave}
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-2xl"
+              disabled={!editForm.amount || isNaN(editForm.amount)}
+            >
+              Save Changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

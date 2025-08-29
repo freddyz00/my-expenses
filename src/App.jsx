@@ -19,7 +19,11 @@ export default function App() {
   const [quickAmount, setQuickAmount] = useState("");
   const [description, setDescription] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(null);
   const inputRef = useRef(null);
+
+  // Smart preset amounts - could be made dynamic based on user patterns
+  const presetAmounts = [5, 10, 20];
 
   const refreshTotals = async () => {
     const txns = await getAllTransactions();
@@ -61,6 +65,45 @@ export default function App() {
     refreshTotals();
   }, []);
 
+  const handlePresetSelect = (amount) => {
+    setSelectedPreset(amount);
+    setQuickAmount(amount.toString());
+    // Auto-focus on add button for immediate submission
+    setTimeout(() => {
+      const addButton = document.querySelector('[data-add-button]');
+      if (addButton) addButton.focus();
+    }, 100);
+  };
+
+  const handleInputFocus = () => {
+    setSelectedPreset(null); // Clear any preset selection
+  };
+
+  const formatAmountInput = (value) => {
+    // Remove all non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      return parts[0] + '.' + parts[1].slice(0, 2);
+    }
+    
+    return numericValue;
+  };
+
+  const handleAmountChange = (e) => {
+    const rawValue = e.target.value;
+    const formattedValue = formatAmountInput(rawValue);
+    setQuickAmount(formattedValue);
+    setSelectedPreset(null); // Clear preset if manually typing
+  };
+
   const handleQuickAdd = async () => {
     if (!quickAmount || isNaN(quickAmount) || isAdding) return;
     
@@ -74,6 +117,7 @@ export default function App() {
       });
       setQuickAmount("");
       setDescription("");
+      setSelectedPreset(null);
       refreshTotals();
       
       // Show success feedback
@@ -146,19 +190,46 @@ export default function App() {
                 <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-4 shadow-lg border border-white/20">
                   <CategoryPicker category={category} setCategory={setCategory} />
                   
-                  <div className="flex gap-3 mt-4">
-                    <Input
-                      ref={inputRef}
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="$0.00"
-                      value={quickAmount}
-                      onChange={(e) => setQuickAmount(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="flex-1 text-xl font-semibold h-12 text-center border-2 border-gray-200 focus:border-blue-500 rounded-2xl"
-                      autoFocus
-                    />
+                  {/* Quick Amount Buttons */}
+                  <div className="mt-4 mb-3">
+                    <div className="flex gap-2">
+                      {presetAmounts.map((amount) => (
+                        <Button
+                          key={amount}
+                          onClick={() => handlePresetSelect(amount)}
+                          variant="ghost"
+                          className={`flex-1 h-10 rounded-xl border-2 transition-all duration-200 ${
+                            selectedPreset === amount
+                              ? 'bg-blue-100 border-blue-500 text-blue-700 font-semibold'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          ${amount}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Amount Input and Add Button */}
+                  <div className="flex gap-3">
+                    <div className="flex-1 relative">
+                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl font-semibold text-gray-400 pointer-events-none">
+                        $
+                      </span>
+                      <Input
+                        ref={inputRef}
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        value={quickAmount}
+                        onChange={handleAmountChange}
+                        onFocus={handleInputFocus}
+                        onKeyPress={handleKeyPress}
+                        className="w-full text-xl font-semibold h-12 text-center border-2 border-gray-200 focus:border-blue-500 rounded-2xl transition-all duration-200 pl-8"
+                      />
+                    </div>
                     <Button
+                      data-add-button
                       onClick={handleQuickAdd}
                       disabled={!quickAmount || isNaN(quickAmount) || isAdding}
                       className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"

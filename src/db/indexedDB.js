@@ -30,6 +30,29 @@ export async function getAllTransactions() {
   return db.getAll(STORE_NAME);
 }
 
+export async function updateTransaction(id, updatedTransaction) {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  
+  // Get the existing transaction
+  const existing = await store.get(id);
+  if (!existing) {
+    throw new Error("Transaction not found");
+  }
+  
+  // Merge with updates
+  const updated = {
+    ...existing,
+    ...updatedTransaction,
+    id, // Ensure ID stays the same
+  };
+  
+  await store.put(updated);
+  await tx.done;
+  return updated;
+}
+
 export async function deleteTransaction(id) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
