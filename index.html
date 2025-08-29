@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     
     <!-- Basic Meta Tags -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="description" content="Simple and elegant expense tracking app for managing your personal finances" />
     <meta name="keywords" content="expenses, finance, budget, money, tracker, personal finance" />
     <meta name="author" content="My Expenses App" />
@@ -45,9 +45,115 @@
     <meta name="msapplication-config" content="/browserconfig.xml" />
     
     <title>My Expenses - Personal Finance Tracker</title>
+    
+    <!-- iOS Keyboard Fix Styles -->
+    <style>
+      /* Prevent page scrolling on iOS when keyboard opens */
+      html, body {
+        position: fixed;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      #root {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      
+      /* Allow scrolling within specific containers */
+      .overflow-auto {
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* iOS specific fixes */
+      @supports (-webkit-touch-callout: none) {
+        /* iOS Safari */
+        body {
+          height: 100vh;
+          height: -webkit-fill-available;
+        }
+        
+        #root {
+          height: 100vh;
+          height: -webkit-fill-available;
+        }
+        
+        /* Prevent zoom on input focus */
+        input, textarea, select {
+          font-size: 16px !important;
+        }
+      }
+      
+      /* Handle viewport height changes */
+      :root {
+        --vh: 1vh;
+      }
+      
+      .viewport-height {
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+        height: 100dvh; /* Dynamic viewport height for modern browsers */
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- iOS Keyboard Handling Script -->
+    <script>
+      // Handle iOS keyboard viewport changes
+      function handleViewportChange() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // Update viewport height class elements
+        const viewportElements = document.querySelectorAll('.viewport-height');
+        viewportElements.forEach(el => {
+          el.style.height = `${window.innerHeight}px`;
+        });
+      }
+      
+      // Initial setup
+      handleViewportChange();
+      
+      // Listen for viewport changes (keyboard open/close)
+      window.addEventListener('resize', handleViewportChange);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(handleViewportChange, 100);
+      });
+      
+      // iOS specific handling
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        // Prevent scrolling on iOS
+        document.addEventListener('touchmove', function(e) {
+          if (e.target.closest('input, textarea, select')) {
+            return; // Allow scrolling within form elements
+          }
+          e.preventDefault();
+        }, { passive: false });
+        
+        // Handle focus events to prevent zoom
+        document.addEventListener('focusin', function(e) {
+          if (e.target.matches('input, textarea, select')) {
+            // Temporarily adjust viewport to prevent zoom
+            const viewport = document.querySelector('meta[name=viewport]');
+            const originalContent = viewport.getAttribute('content');
+            viewport.setAttribute('content', originalContent + ', maximum-scale=1.0');
+            
+            setTimeout(() => {
+              viewport.setAttribute('content', originalContent);
+            }, 100);
+          }
+        });
+      }
+    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

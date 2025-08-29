@@ -142,7 +142,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
+    <div className="viewport-height bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col overflow-hidden">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
