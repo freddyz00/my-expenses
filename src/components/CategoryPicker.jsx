@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Utensils, ShoppingBag, MoreHorizontal } from "lucide-react";
+import { hapticFeedback } from "../utils/haptics";
 
 export const CATEGORIES_TO_COLOR = {
   Food: {
@@ -41,12 +42,15 @@ export default function CategoryPicker({ category, setCategory }) {
         return (
           <Button
             key={cat}
-            onClick={() => setCategory(cat)}
+            onClick={() => {
+              hapticFeedback.selection();
+              setCategory(cat);
+            }}
             variant="ghost"
-            className={`flex-1 h-16 flex flex-col items-center gap-2 rounded-2xl border-2 transition-all duration-200 hover:scale-105 ${
+            className={`flex-1 h-16 flex flex-col items-center gap-2 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
               isSelected 
                 ? `bg-gradient-to-r ${config.gradient} ${config.textSelected} border-transparent shadow-lg` 
-                : `${config.bgLight} ${config.text} ${config.border} hover:${config.bg} hover:${config.textSelected}`
+                : `${config.bgLight} ${config.text} ${config.border}`
             }`}
           >
             <Icon className="w-5 h-5" />

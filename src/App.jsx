@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getAllTransactions, addTransaction } from "./db/indexedDB";
 import TransactionsList from "@/components/TransactionsList";
-import { Home, List, Plus, TrendingUp, Calendar } from "lucide-react";
+import { Home, List, Plus, TrendingUp, Calendar, Check } from "lucide-react";
 import CategoryPicker from "./components/CategoryPicker";
 import WeeklyChart from "./components/WeeklyChart";
+import { hapticFeedback } from "./utils/haptics";
 
 export default function App() {
   const [category, setCategory] = useState("Food");
@@ -66,6 +67,7 @@ export default function App() {
   }, []);
 
   const handlePresetSelect = (amount) => {
+    hapticFeedback.selection();
     setSelectedPreset(amount);
     setQuickAmount(amount.toString());
     // Auto-focus on add button for immediate submission
@@ -107,7 +109,9 @@ export default function App() {
   const handleQuickAdd = async () => {
     if (!quickAmount || isNaN(quickAmount) || isAdding) return;
     
+    hapticFeedback.light(); // Light feedback on button press
     setIsAdding(true);
+    
     try {
       await addTransaction({
         amount: Number(quickAmount),
@@ -115,14 +119,18 @@ export default function App() {
         description: description.trim(),
         date: new Date().toISOString(),
       });
+      
+      // Success haptic feedback
+      hapticFeedback.success();
+      
       setQuickAmount("");
       setDescription("");
       setSelectedPreset(null);
       refreshTotals();
+      setIsAdding(false);
       
-      // Show success feedback
-      setTimeout(() => setIsAdding(false), 500);
     } catch (error) {
+      hapticFeedback.error();
       setIsAdding(false);
       console.error("Error adding transaction:", error);
     }
@@ -138,7 +146,10 @@ export default function App() {
     <div className="h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={(value) => {
+          hapticFeedback.light();
+          setActiveTab(value);
+        }}
         className="flex flex-col h-full"
       >
         {/* Header */}
@@ -198,10 +209,10 @@ export default function App() {
                           key={amount}
                           onClick={() => handlePresetSelect(amount)}
                           variant="ghost"
-                          className={`flex-1 h-10 rounded-xl border-2 transition-all duration-200 ${
+                          className={`flex-1 h-10 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
                             selectedPreset === amount
                               ? 'bg-blue-100 border-blue-500 text-blue-700 font-semibold'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              : 'border-gray-200'
                           }`}
                         >
                           ${amount}
@@ -232,9 +243,9 @@ export default function App() {
                       data-add-button
                       onClick={handleQuickAdd}
                       disabled={!quickAmount || isNaN(quickAmount) || isAdding}
-                      className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
                     >
-                      {isAdding ? "..." : "Add"}
+                      Add
                     </Button>
                   </div>
 
@@ -268,19 +279,19 @@ export default function App() {
 
         {/* Bottom Navigation - Fixed */}
         <div className="flex-shrink-0 bg-white/90 backdrop-blur-lg border-t border-gray-200">
-          <TabsList className="w-full h-16 bg-transparent p-3 max-w-md mx-auto">
+          <TabsList className="w-full h-14 bg-transparent max-w-md mx-auto">
             <TabsTrigger 
               value="dashboard" 
               className="flex-1 flex flex-col items-center gap-1 h-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-600 rounded-xl transition-all duration-200"
             >
-              <Home className="w-5 h-5" />
+              <Home className="w-4 h-4" />
               <span className="text-xs font-medium">Home</span>
             </TabsTrigger>
             <TabsTrigger 
               value="transactions"
               className="flex-1 flex flex-col items-center gap-1 h-full data-[state=active]:bg-blue-100 data-[state=active]:text-blue-600 rounded-xl transition-all duration-200"
             >
-              <List className="w-5 h-5" />
+              <List className="w-4 h-4" />
               <span className="text-xs font-medium">Transactions</span>
             </TabsTrigger>
           </TabsList>

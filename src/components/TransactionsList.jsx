@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { CATEGORIES_TO_COLOR } from "./CategoryPicker";
 import CategoryPicker from "./CategoryPicker";
+import { hapticFeedback } from "../utils/haptics";
 
 // Swipeable Transaction Component
 function SwipeableTransaction({ transaction, onDelete, onEdit }) {
@@ -59,6 +60,7 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
     
     // If swiped more than 60px, keep it open, otherwise close
     if (swipeOffset > 60) {
+      hapticFeedback.swipe();
       setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
@@ -87,6 +89,7 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
     setIsDragging(false);
     
     if (swipeOffset > 60) {
+      hapticFeedback.swipe();
       setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
@@ -94,11 +97,13 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
   };
 
   const handleDelete = () => {
+    hapticFeedback.medium();
     onDelete(transaction.id);
     setSwipeOffset(0);
   };
 
   const handleEdit = () => {
+    hapticFeedback.light();
     onEdit(transaction);
     setSwipeOffset(0);
   };
@@ -111,14 +116,14 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
           {/* Edit Button */}
           <Button
             onClick={handleEdit}
-            className="w-16 h-full bg-blue-500 hover:bg-blue-600 text-white rounded-none border-0 p-0 flex items-center justify-center"
+            className="w-16 h-full bg-blue-500 active:bg-blue-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150 active:scale-95"
           >
             <Edit3 className="w-5 h-5" />
           </Button>
           {/* Delete Button */}
           <Button
             onClick={handleDelete}
-            className="w-16 h-full bg-red-500 hover:bg-red-600 text-white rounded-none border-0 p-0 flex items-center justify-center"
+            className="w-16 h-full bg-red-500 active:bg-red-700 text-white rounded-none border-0 p-0 flex items-center justify-center transition-all duration-150 active:scale-95"
           >
             <Trash2 className="w-5 h-5" />
           </Button>
@@ -410,7 +415,7 @@ export default function TransactionsList() {
                   </div>
                   <span className="text-sm font-medium text-gray-900">
                     ${dayTotal.toFixed(2)}
-                  </span>
+              </span>
                 </div>
 
                 {/* Transactions for this date */}
