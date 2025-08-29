@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, CartesianGrid, YAxis, ResponsiveContainer } from "recharts";
 import {
@@ -14,24 +15,29 @@ const chartConfig = {
   },
 };
 
-export default function WeeklyChart({ transactions }) {
-  // Prepare data: sum amount per day for last 7 days
-  const now = new Date();
-  const data = Array.from({ length: 7 }).map((_, i) => {
-    const date = new Date();
-    date.setDate(now.getDate() - (6 - i));
-    const day = date.toLocaleDateString("en-US", { weekday: "short" });
-    const total = transactions
-      .filter((t) => {
-        const tDate = new Date(t.date);
-        return tDate.toDateString() === date.toDateString();
-      })
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-    return { day, amount: total, fullDate: date };
-  });
+const WeeklyChart = React.memo(function WeeklyChart({ transactions }) {
+  // Memoize expensive calculations
+  const { data, maxAmount, totalWeek } = useMemo(() => {
+    // Prepare data: sum amount per day for last 7 days
+    const now = new Date();
+    const chartData = Array.from({ length: 7 }).map((_, i) => {
+      const date = new Date();
+      date.setDate(now.getDate() - (6 - i));
+      const day = date.toLocaleDateString("en-US", { weekday: "short" });
+      const total = transactions
+        .filter((t) => {
+          const tDate = new Date(t.date);
+          return tDate.toDateString() === date.toDateString();
+        })
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      return { day, amount: total, fullDate: date };
+    });
 
-  const maxAmount = Math.max(...data.map(d => d.amount));
-  const totalWeek = data.reduce((sum, d) => sum + d.amount, 0);
+    const maxAmt = Math.max(...chartData.map(d => d.amount));
+    const weekTotal = chartData.reduce((sum, d) => sum + d.amount, 0);
+
+    return { data: chartData, maxAmount: maxAmt, totalWeek: weekTotal };
+  }, [transactions]);
 
   return (
     <div className="h-full bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-3xl flex flex-col">
@@ -138,4 +144,6 @@ export default function WeeklyChart({ transactions }) {
       </div>
     </div>
   );
-}
+});
+
+export default WeeklyChart;

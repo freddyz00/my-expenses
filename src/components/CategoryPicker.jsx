@@ -1,6 +1,7 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Utensils, ShoppingBag, MoreHorizontal } from "lucide-react";
-import { hapticFeedback } from "../utils/haptics";
+
 
 export const CATEGORIES_TO_COLOR = {
   Food: {
@@ -32,7 +33,7 @@ export const CATEGORIES_TO_COLOR = {
   },
 };
 
-export default function CategoryPicker({ category, setCategory }) {
+const CategoryPicker = React.memo(function CategoryPicker({ category, setCategory }) {
   return (
     <div className="flex gap-3">
       {Object.entries(CATEGORIES_TO_COLOR).map(([cat, config]) => {
@@ -42,10 +43,7 @@ export default function CategoryPicker({ category, setCategory }) {
         return (
           <Button
             key={cat}
-            onClick={() => {
-              hapticFeedback.selection();
-              setCategory(cat);
-            }}
+            onClick={() => setCategory(cat)}
             variant="ghost"
             className={`flex-1 h-16 flex flex-col items-center gap-2 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
               isSelected 
@@ -60,4 +58,6 @@ export default function CategoryPicker({ category, setCategory }) {
       })}
     </div>
   );
-}
+});
+
+export default CategoryPicker;

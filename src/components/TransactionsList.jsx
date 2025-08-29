@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Trash2, Calendar, DollarSign, Edit3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/select";
 import { CATEGORIES_TO_COLOR } from "./CategoryPicker";
 import CategoryPicker from "./CategoryPicker";
-import { hapticFeedback } from "../utils/haptics";
+
 
 // Swipeable Transaction Component
-function SwipeableTransaction({ transaction, onDelete, onEdit }) {
+const SwipeableTransaction = React.memo(function SwipeableTransaction({ transaction, onDelete, onEdit }) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -60,7 +60,6 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
     
     // If swiped more than 60px, keep it open, otherwise close
     if (swipeOffset > 60) {
-      hapticFeedback.swipe();
       setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
@@ -89,24 +88,21 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
     setIsDragging(false);
     
     if (swipeOffset > 60) {
-      hapticFeedback.swipe();
       setSwipeOffset(120);
     } else {
       setSwipeOffset(0);
     }
   };
 
-  const handleDelete = () => {
-    hapticFeedback.medium();
+  const handleDelete = useCallback(() => {
     onDelete(transaction.id);
     setSwipeOffset(0);
-  };
+  }, [onDelete, transaction.id]);
 
-  const handleEdit = () => {
-    hapticFeedback.light();
+  const handleEdit = useCallback(() => {
     onEdit(transaction);
     setSwipeOffset(0);
-  };
+  }, [onEdit, transaction]);
 
   return (
     <div className="relative rounded-2xl shadow-sm">
@@ -182,11 +178,10 @@ function SwipeableTransaction({ transaction, onDelete, onEdit }) {
       </div>
     </div>
   );
-}
+});
 
 export default function TransactionsList() {
   const [allTransactions, setAllTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -204,27 +199,25 @@ export default function TransactionsList() {
     getAllTransactions().then((transactions) => {
       const sorted = transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
       setAllTransactions(sorted);
-      setFilteredTransactions(sorted);
     });
   }, []);
 
-  // Filter transactions when month or year selection changes
-  useEffect(() => {
+  // Memoize filtered transactions to prevent unnecessary recalculations
+  const memoizedFilteredTransactions = useMemo(() => {
     if (selectedMonth === 'all' && selectedYear === 'all') {
-      setFilteredTransactions(allTransactions);
-    } else {
-      const filtered = allTransactions.filter(transaction => {
-        const date = new Date(transaction.date);
-        const matchesMonth = selectedMonth === 'all' || date.getMonth() === parseInt(selectedMonth);
-        const matchesYear = selectedYear === 'all' || date.getFullYear() === parseInt(selectedYear);
-        return matchesMonth && matchesYear;
-      });
-      setFilteredTransactions(filtered);
+      return allTransactions;
     }
+    
+    return allTransactions.filter(transaction => {
+      const date = new Date(transaction.date);
+      const matchesMonth = selectedMonth === 'all' || date.getMonth() === parseInt(selectedMonth);
+      const matchesYear = selectedYear === 'all' || date.getFullYear() === parseInt(selectedYear);
+      return matchesMonth && matchesYear;
+    });
   }, [selectedMonth, selectedYear, allTransactions]);
 
-  // Generate available months and years from transactions
-  const getAvailableMonths = () => {
+  // Memoize available months and years to prevent recalculation
+  const availableMonths = useMemo(() => {
     const months = new Set();
     allTransactions.forEach(transaction => {
       const date = new Date(transaction.date);
@@ -237,9 +230,9 @@ export default function TransactionsList() {
         value: month.toString(),
         label: new Date(2024, month).toLocaleDateString('en-US', { month: 'long' })
       }));
-  };
+  }, [allTransactions]);
 
-  const getAvailableYears = () => {
+  const availableYears = useMemo(() => {
     const years = new Set();
     allTransactions.forEach(transaction => {
       const date = new Date(transaction.date);
@@ -252,7 +245,7 @@ export default function TransactionsList() {
         value: year.toString(),
         label: year.toString()
       }));
-  };
+  }, [allTransactions]);
 
   const handleDelete = async (id) => {
     setTransactionToDelete(id);
@@ -335,9 +328,7 @@ export default function TransactionsList() {
     return groups;
   };
 
-  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
-  const availableMonths = getAvailableMonths();
-  const availableYears = getAvailableYears();
+  const groupedTransactions = groupTransactionsByDate(memoizedFilteredTransactions);
 
   const isFiltered = selectedMonth !== 'all' || selectedYear !== 'all';
 
@@ -382,7 +373,7 @@ export default function TransactionsList() {
         </div>
       )}
 
-      {filteredTransactions.length === 0 ? (
+      {memoizedFilteredTransactions.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <DollarSign className="w-8 h-8 text-gray-400" />

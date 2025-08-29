@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,13 @@ import TransactionsList from "@/components/TransactionsList";
 import { Home, List, Plus, TrendingUp, Calendar, Check } from "lucide-react";
 import CategoryPicker from "./components/CategoryPicker";
 import WeeklyChart from "./components/WeeklyChart";
-import { hapticFeedback } from "./utils/haptics";
+
 
 export default function App() {
   const [category, setCategory] = useState("Food");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [allTransactions, setAllTransactions] = useState([]);
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
-  const [weeklyTotal, setWeeklyTotal] = useState(0);
-  const [todayTotal, setTodayTotal] = useState(0);
+
   const [quickAmount, setQuickAmount] = useState("");
   const [description, setDescription] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -26,13 +24,17 @@ export default function App() {
   // Smart preset amounts - could be made dynamic based on user patterns
   const presetAmounts = [5, 10, 20];
 
-  const refreshTotals = async () => {
+  const refreshTotals = useCallback(async () => {
     const txns = await getAllTransactions();
     setAllTransactions(txns);
+  }, []);
+
+  // Memoize expensive total calculations
+  const { monthlyTotal, weeklyTotal, todayTotal } = useMemo(() => {
     const now = new Date();
     
     // Monthly total
-    const monthTotal = txns
+    const monthTotal = allTransactions
       .filter((t) => {
         const date = new Date(t.date);
         return (
@@ -41,33 +43,35 @@ export default function App() {
         );
       })
       .reduce((sum, t) => sum + Number(t.amount), 0);
-    setMonthlyTotal(monthTotal);
 
     // Weekly total (last 7 days)
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const weekTotal = txns
+    const weekTotal = allTransactions
       .filter((t) => new Date(t.date) >= weekAgo)
       .reduce((sum, t) => sum + Number(t.amount), 0);
-    setWeeklyTotal(weekTotal);
 
     // Today total
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    const todayTotalAmount = txns
+    const todayTotalAmount = allTransactions
       .filter((t) => {
         const date = new Date(t.date);
         return date >= todayStart && date < todayEnd;
       })
       .reduce((sum, t) => sum + Number(t.amount), 0);
-    setTodayTotal(todayTotalAmount);
-  };
+
+    return {
+      monthlyTotal: monthTotal,
+      weeklyTotal: weekTotal,
+      todayTotal: todayTotalAmount
+    };
+  }, [allTransactions]);
 
   useEffect(() => {
     refreshTotals();
-  }, []);
+  }, [refreshTotals]);
 
   const handlePresetSelect = (amount) => {
-    hapticFeedback.selection();
     setSelectedPreset(amount);
     setQuickAmount(amount.toString());
     // Auto-focus on add button for immediate submission
@@ -109,7 +113,6 @@ export default function App() {
   const handleQuickAdd = async () => {
     if (!quickAmount || isNaN(quickAmount) || isAdding) return;
     
-    hapticFeedback.light(); // Light feedback on button press
     setIsAdding(true);
     
     try {
@@ -120,9 +123,6 @@ export default function App() {
         date: new Date().toISOString(),
       });
       
-      // Success haptic feedback
-      hapticFeedback.success();
-      
       setQuickAmount("");
       setDescription("");
       setSelectedPreset(null);
@@ -130,7 +130,6 @@ export default function App() {
       setIsAdding(false);
       
     } catch (error) {
-      hapticFeedback.error();
       setIsAdding(false);
       console.error("Error adding transaction:", error);
     }
@@ -146,10 +145,7 @@ export default function App() {
     <div className="h-screen bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
       <Tabs
         value={activeTab}
-        onValueChange={(value) => {
-          hapticFeedback.light();
-          setActiveTab(value);
-        }}
+        onValueChange={setActiveTab}
         className="flex flex-col h-full"
       >
         {/* Header */}
