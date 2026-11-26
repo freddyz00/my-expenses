@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Home as HomeIcon, List, Settings as SettingsIcon } from "lucide-react";
 import { useTransactions } from "@/hooks/useTransactions";
+import Home from "@/components/Home";
 
 const NAV = [
   { value: "home", label: "Home", icon: HomeIcon },
@@ -11,7 +12,7 @@ const NAV = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const data = useTransactions();
+  const { transactions, add, remove } = useTransactions();
 
   return (
     <div className="viewport-height flex flex-col overflow-hidden bg-[#F6F7F9] text-[#0F172A]">
@@ -19,7 +20,12 @@ export default function App() {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-md px-5 pt-7 pb-6">
             <TabsContent value="home">
-              <p>{data.transactions.length} expenses</p>
+              <Home
+                transactions={transactions}
+                add={add}
+                remove={remove}
+                onSeeAll={() => setActiveTab("activity")}
+              />
             </TabsContent>
             <TabsContent value="activity">
               <p>Activity</p>
@@ -35,15 +41,15 @@ export default function App() {
             {NAV.map(({ value, label, icon }) => {
               const Icon = icon;
               return (
-              <TabsTrigger
-                key={value}
-                value={value}
-                className="flex h-full flex-col items-center justify-center gap-1 rounded-xl border-0 text-[11px] font-medium text-[#5B6474] shadow-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-[#2563EB] data-[state=active]:shadow-none"
-              >
-                <Icon className="size-[22px]" aria-hidden="true" />
-                {label}
-              </TabsTrigger>
-            );
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="flex h-full flex-col items-center justify-center gap-1 rounded-xl border-0 text-[11px] font-medium text-[#5B6474] shadow-none data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-[#2563EB] data-[state=active]:shadow-none"
+                >
+                  <Icon className="size-[22px]" aria-hidden="true" />
+                  {label}
+                </TabsTrigger>
+              );
             })}
           </TabsList>
         </nav>

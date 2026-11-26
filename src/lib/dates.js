@@ -40,3 +40,7 @@ export function withCurrentTime(date, now) {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds()).toISOString();
 }
+
+export function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { localDayKey, dayLabel, toDateInput, toTimeInput, fromDateTimeInputs, withCurrentTime } from './dates.js';
+import { localDayKey, dayLabel, toDateInput, toTimeInput, fromDateTimeInputs, withCurrentTime, formatTime } from './dates.js';
 
 test('localDayKey uses the local date, not UTC', () => {
   assert.equal(localDayKey(new Date(2026, 10, 30, 23, 30).toISOString()), '2026-11-30');
@@ -23,4 +23,9 @@ test('withCurrentTime keeps the chosen day with the current time', () => {
   const iso = withCurrentTime('2026-11-25', new Date(2026, 10, 26, 8, 15));
   assert.equal(toDateInput(iso), '2026-11-25');
   assert.equal(toTimeInput(iso), '08:15');
+});
+
+test('formatTime shows 12-hour time', () => {
+  assert.equal(formatTime(new Date(2026, 10, 26, 10, 41).toISOString()), '10:41 AM');
+  assert.equal(formatTime(new Date(2026, 10, 26, 20, 5).toISOString()), '8:05 PM');
 });
