@@ -4,6 +4,7 @@ import { Home as HomeIcon, List, Settings as SettingsIcon } from "lucide-react";
 import { useTransactions } from "@/hooks/useTransactions";
 import Home from "@/components/Home";
 import Activity from "@/components/Activity";
+import Settings from "@/components/Settings";
 
 const NAV = [
   { value: "home", label: "Home", icon: HomeIcon },
@@ -13,7 +14,7 @@ const NAV = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const { transactions, add, update, remove } = useTransactions();
+  const { transactions, add, update, remove, replaceAll } = useTransactions();
 
   return (
     <div className="viewport-height flex flex-col overflow-hidden bg-[#F6F7F9] text-[#0F172A]">
@@ -32,7 +33,7 @@ export default function App() {
               <Activity transactions={transactions} update={update} remove={remove} />
             </TabsContent>
             <TabsContent value="settings">
-              <p>Settings</p>
+              <Settings transactions={transactions} replaceAll={replaceAll} />
             </TabsContent>
           </div>
         </div>
