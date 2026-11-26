@@ -1,4 +1,4 @@
-import { CATEGORIES, getCategory, isKnownCategory } from './categories.js';
+import { CATEGORIES, getCategory, categoryGroup } from './categories.js';
 import { localDayKey } from './dates.js';
 
 const sum = (txns) => txns.reduce((s, t) => s + (Number(t.amount) || 0), 0);
@@ -28,7 +28,7 @@ export function last7Days(txns, now) {
 export function totalsByCategory(txns) {
   const totals = Object.fromEntries(CATEGORIES.map((c) => [c.name, 0]));
   for (const t of txns) {
-    const name = isKnownCategory(t.category) ? t.category : 'Others';
+    const name = categoryGroup(t.category);
     totals[name] += Number(t.amount) || 0;
   }
   return CATEGORIES.filter((c) => totals[c.name] > 0)

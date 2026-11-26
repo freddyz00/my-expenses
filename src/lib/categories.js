@@ -14,3 +14,7 @@ export function isKnownCategory(name) {
 export function getCategory(name) {
   return CATEGORIES.find((c) => c.name === name) ?? { ...OTHERS, name: name || OTHERS.name };
 }
+
+export function categoryGroup(name) {
+  return isKnownCategory(name) ? name : OTHERS.name;
+}
