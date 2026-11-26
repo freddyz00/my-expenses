@@ -150,6 +150,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
               ref={amountRef}
               autoFocus
               inputMode="decimal"
+              enterKeyHint="done"
               placeholder="0.00"
               aria-label="Amount"
               value={amount}
@@ -194,6 +195,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
 
         <input
           placeholder="Add a note (optional)"
+          enterKeyHint="done"
           aria-label="Note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
