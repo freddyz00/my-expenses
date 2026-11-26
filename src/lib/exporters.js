@@ -21,10 +21,15 @@ export function toBackup(txns, now) {
   return JSON.stringify({ version: 1, exportedAt: now.toISOString(), transactions: txns }, null, 2);
 }
 
+function isValidId(id) {
+  return id === undefined || (typeof id === 'number' && Number.isFinite(id)) || (typeof id === 'string' && id !== '');
+}
+
 function isValidRecord(t) {
   return (
     t !== null &&
     typeof t === 'object' &&
+    isValidId(t.id) &&
     t.amount !== '' &&
     Number.isFinite(Number(t.amount)) &&
     typeof t.category === 'string' &&
@@ -39,7 +44,7 @@ export function parseBackup(text) {
   } catch {
     return { ok: false, error: BAD_FILE };
   }
-  if (!data || data.version !== 1 || !Array.isArray(data.transactions) || !data.transactions.every(isValidRecord)) {
+  if (!data || data.version !== 1 || !Array.isArray(data.transactions) || data.transactions.length === 0 || !data.transactions.every(isValidRecord)) {
     return { ok: false, error: BAD_FILE };
   }
   return { ok: true, transactions: data.transactions };

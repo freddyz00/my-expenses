@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar } from "lucide-react";
 import CategoryChips from "@/components/CategoryChips";
 import Toast from "@/components/Toast";
@@ -30,14 +30,24 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [category, setCategory] = useState(readLastCategory);
-  const [day, setDay] = useState(() => localDayKey(new Date()));
+  // null means "today", resolved when the expense is added, so an app resumed after midnight never saves to yesterday.
+  const [day, setDay] = useState(null);
+  const [resumedAt, setResumedAt] = useState(() => Date.now());
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
   const amountRef = useRef(null);
-  const dateRef = useRef(null);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setResumedAt(Date.now());
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   const now = new Date();
   const todayKey = localDayKey(now);
+  const chosenDay = day ?? todayKey;
 
   const { month, today, week, bars, recent } = useMemo(() => {
     const at = new Date();
@@ -50,7 +60,9 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
       bars: days.map((d) => ({ ...d, height: max > 0 ? Math.max(4, (d.total / max) * 44) : 4 })),
       recent: [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3),
     };
-  }, [transactions]);
+    // resumedAt re-runs this when the app returns to the foreground, so totals follow the real date.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, resumedAt]);
 
   const canAdd = isValidAmount(amount) && !saving;
 
@@ -63,12 +75,12 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
         amount: value,
         category,
         description: note.trim(),
-        date: withCurrentTime(day, new Date()),
+        date: withCurrentTime(day ?? localDayKey(new Date()), new Date()),
       });
       saveLastCategory(category);
       setAmount("");
       setNote("");
-      setDay(localDayKey(new Date()));
+      setDay(null);
       setToast({ id, message: `Added ${formatMoney(value)} to ${category}` });
       amountRef.current?.focus();
     } catch (error) {
@@ -83,21 +95,6 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
       e.preventDefault();
       submit();
     }
-  };
-
-  const openDatePicker = () => {
-    const input = dateRef.current;
-    if (!input) return;
-    if (typeof input.showPicker === "function") {
-      try {
-        input.showPicker();
-        return;
-      } catch {
-        // Fall through to focus/click.
-      }
-    }
-    input.focus();
-    input.click();
   };
 
   const undo = async () => {
@@ -161,26 +158,18 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
               className="w-full min-w-0 bg-transparent p-0 text-[40px] font-bold tracking-tight text-[#0F172A] outline-none placeholder:text-[#B7BEC9]"
             />
           </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={openDatePicker}
-              className="flex h-11 items-center gap-1.5 rounded-full border border-[#E3E6EB] bg-[#F6F7F9] px-3 text-[13px] font-medium"
-            >
-              <Calendar className="size-3.5" aria-hidden="true" />
-              {dayLabel(day, now)}
-            </button>
+          <label className="relative flex h-11 items-center gap-1.5 rounded-full border border-[#E3E6EB] bg-[#F6F7F9] px-3 text-[13px] font-medium">
+            <Calendar className="size-3.5" aria-hidden="true" />
+            <span aria-hidden="true">{dayLabel(chosenDay, now)}</span>
             <input
-              ref={dateRef}
               type="date"
-              aria-label="Date"
-              tabIndex={-1}
+              aria-label={`Date: ${dayLabel(chosenDay, now)}`}
               max={todayKey}
-              value={day}
-              onChange={(e) => e.target.value && setDay(e.target.value)}
-              className="pointer-events-none absolute inset-0 opacity-0"
+              value={chosenDay}
+              onChange={(e) => e.target.value && setDay(e.target.value === todayKey ? null : e.target.value)}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
-          </div>
+          </label>
         </div>
 
         <div className="flex gap-2">
@@ -253,7 +242,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
       )}
 
       {toast && (
-        <Toast message={toast.message} actionLabel="Undo" onAction={undo} onDone={hideToast} />
+        <Toast key={toast.id} message={toast.message} actionLabel="Undo" onAction={undo} onDone={hideToast} />
       )}
     </div>
   );

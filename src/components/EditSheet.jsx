@@ -41,14 +41,16 @@ function EditForm({ transaction, onSave, onDelete, onClose }) {
       <div className="h-1 w-10 self-center rounded-full bg-[#D5DAE1]" />
       <div className="flex items-center justify-between">
         <DialogPrimitive.Title className="text-lg font-semibold">Edit expense</DialogPrimitive.Title>
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="flex size-11 items-center justify-center rounded-xl text-[#5B6474]"
-        >
-          <X className="size-5" aria-hidden="true" />
-        </button>
+        <DialogPrimitive.Cancel asChild>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex size-11 items-center justify-center rounded-xl text-[#5B6474]"
+          >
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </DialogPrimitive.Cancel>
       </div>
 
       <label className="flex items-baseline gap-1 border-b border-[#E3E6EB] pb-3">

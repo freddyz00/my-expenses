@@ -34,3 +34,16 @@ test('parseBackup rejects files that are not backups', () => {
     assert.equal(r.error, "This file isn't a My Expenses backup.");
   }
 });
+
+test('parseBackup rejects records with an id IndexedDB cannot store', () => {
+  for (const id of ['null', 'true', '{}', '""']) {
+    const text = `{"version":1,"transactions":[{"id":${id},"amount":1,"category":"Food","date":"2026-01-01T00:00:00.000Z"}]}`;
+    assert.equal(parseBackup(text).ok, false, id);
+  }
+  const noId = '{"version":1,"transactions":[{"amount":1,"category":"Food","date":"2026-01-01T00:00:00.000Z"}]}';
+  assert.equal(parseBackup(noId).ok, true);
+});
+
+test('parseBackup rejects a backup with no expenses', () => {
+  assert.equal(parseBackup('{"version":1,"transactions":[]}').ok, false);
+});

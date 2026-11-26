@@ -64,9 +64,16 @@ export async function replaceAllTransactions(records) {
   const db = await initDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);
-  await store.clear();
-  for (const record of records) {
-    await store.put(record);
+  try {
+    await store.clear();
+    for (const record of records) {
+      await store.put(record);
+    }
+  } catch (error) {
+    // Roll back the clear so a bad record never leaves the store empty.
+    tx.abort();
+    await tx.done.catch(() => {});
+    throw error;
   }
   await tx.done;
 }
