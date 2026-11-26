@@ -59,3 +59,14 @@ export async function deleteTransaction(id) {
   await tx.objectStore(STORE_NAME).delete(id);
   await tx.done;
 }
+
+export async function replaceAllTransactions(records) {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  await store.clear();
+  for (const record of records) {
+    await store.put(record);
+  }
+  await tx.done;
+}
