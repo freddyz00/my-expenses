@@ -58,7 +58,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
       today: days[6].total,
       week: days.reduce((s, d) => s + d.total, 0),
       bars: days.map((d) => ({ ...d, height: max > 0 ? Math.max(4, (d.total / max) * 44) : 4 })),
-      recent: [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3),
+      recent: [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5),
     };
     // resumedAt re-runs this when the app returns to the foreground, so totals follow the real date.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,7 +108,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
   const monthName = now.toLocaleDateString("en-US", { month: "long" });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <header className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-[13px] font-medium text-[#5B6474]">Spent in {monthName}</span>
@@ -211,17 +211,19 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
       </form>
 
       {recent.length > 0 && (
-        <section aria-labelledby="recent-h" className="flex flex-col">
+        <section aria-labelledby="recent-h" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex items-center justify-between px-1 pb-1">
             <h2 id="recent-h" className="text-[15px] font-semibold">Recent</h2>
             <button type="button" onClick={onSeeAll} className="h-11 text-sm font-medium text-[#2563EB]">
               See all
             </button>
           </div>
+          {/* Column-wrap + overflow hidden: rows that don't fit move to a hidden second column, so no row is cut in half. */}
+          <div className="flex min-h-0 flex-1 flex-col flex-wrap content-start overflow-hidden">
           {recent.map((t) => {
             const c = getCategory(t.category);
             return (
-              <div key={t.id} className="flex items-center gap-3 border-b border-[#E9ECF0] px-1 py-2.5">
+              <div key={t.id} className="flex w-full flex-shrink-0 items-center gap-3 border-b border-[#E9ECF0] px-1 py-2.5">
                 <span
                   className="flex size-9 flex-shrink-0 items-center justify-center rounded-[10px]"
                   style={{ background: c.tint }}
@@ -238,6 +240,7 @@ export default function Home({ transactions, add, remove, onSeeAll }) {
               </div>
             );
           })}
+          </div>
         </section>
       )}
 

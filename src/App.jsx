@@ -20,8 +20,8 @@ export default function App() {
     <div className="viewport-height flex flex-col overflow-hidden bg-[#F6F7F9] text-[#0F172A]">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col gap-0">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-md px-5 pt-7 pb-6">
-            <TabsContent value="home">
+          <div className="mx-auto flex h-full w-full max-w-md flex-col px-5 pt-7">
+            <TabsContent value="home" className="flex min-h-0 flex-col pb-4">
               <Home
                 transactions={transactions}
                 add={add}
@@ -29,10 +29,10 @@ export default function App() {
                 onSeeAll={() => setActiveTab("activity")}
               />
             </TabsContent>
-            <TabsContent value="activity">
+            <TabsContent value="activity" className="flex-none pb-6">
               <Activity transactions={transactions} update={update} remove={remove} />
             </TabsContent>
-            <TabsContent value="settings">
+            <TabsContent value="settings" className="flex-none pb-6">
               <Settings transactions={transactions} replaceAll={replaceAll} />
             </TabsContent>
           </div>
